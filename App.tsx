@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Linking, Alert } from 'react-native';
 
 import { UserProvider } from './src/context/UserContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
@@ -52,6 +53,43 @@ function MainTabs() {
 
 function AppNavigator() {
   const { user, isLoading, isAuthenticated } = useUser();
+
+  useEffect(() => {
+    // Handle deep links for Stripe payment redirects
+    const handleDeepLink = (url: string) => {
+      if (url.includes('payment-success')) {
+        Alert.alert(
+          'Payment Successful!',
+          'Your subscription has been activated. Welcome to Calorie.Help Pro!',
+          [{ text: 'Continue', style: 'default' }]
+        );
+      } else if (url.includes('payment-cancel')) {
+        Alert.alert(
+          'Payment Cancelled',
+          'Your payment was cancelled. You can try again anytime.',
+          [{ text: 'OK', style: 'default' }]
+        );
+      } else if (url.includes('billing-return')) {
+        Alert.alert(
+          'Billing Updated',
+          'Your billing information has been updated.',
+          [{ text: 'OK', style: 'default' }]
+        );
+      }
+    };
+
+    // Handle app opened from deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url);
+    });
+
+    // Handle deep links while app is running
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    return () => subscription?.remove();
+  }, []);
 
   if (isLoading) {
     return null; // You could add a loading screen here

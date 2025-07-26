@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,13 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  Alert,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { createCheckoutSession } from '../../services/api';
 
 const plans = [
   {
@@ -58,10 +62,63 @@ const plans = [
 
 export default function PlanSelectionStep() {
   const { state, updateData, nextStep, prevStep } = useOnboarding();
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const handlePlanSelect = (planType: string) => {
+    setSelectedPlan(planType);
     updateData({ planType: planType as any });
-    setTimeout(nextStep, 100);
+  };
+
+  const handleContinueWithPayment = async () => {
+    if (!selectedPlan) {
+      Alert.alert('Error', 'Please select a plan to continue.');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+    try {
+      const result = await createCheckoutSession(selectedPlan as 'steady' | 'intensive' | 'accelerated');
+      
+      // Open Stripe checkout
+      await Linking.openURL(result.url);
+      
+      // For demo purposes, we'll proceed to the next step
+      // In a real app, you'd wait for the webhook to confirm payment
+      Alert.alert(
+        'Payment Processing',
+        'You will be redirected to complete your payment. After successful payment, you can continue with the setup.',
+        [
+          {
+            text: 'Continue Setup',
+            onPress: () => nextStep(),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      Alert.alert('Error', error.message || 'Failed to start payment process. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleSkipPayment = () => {
+    Alert.alert(
+      'Continue with Free Plan?',
+      'You can upgrade to a premium plan anytime from your profile settings.',
+      [
+        { text: 'Go Back', style: 'cancel' },
+        {
+          text: 'Continue Free',
+          onPress: () => {
+            // Set a default plan for free users
+            updateData({ planType: 'steady' });
+            nextStep();
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -85,7 +142,7 @@ export default function PlanSelectionStep() {
               key={plan.key}
               style={[
                 styles.planCard,
-                state.data.planType === plan.key && styles.selectedPlan,
+                selectedPlan === plan.key && styles.selectedPlan,
                 { borderColor: plan.color },
               ]}
               onPress={() => handlePlanSelect(plan.key)}
@@ -115,9 +172,44 @@ export default function PlanSelectionStep() {
                   </View>
                 ))}
               </View>
+
+              {selectedPlan === plan.key && (
+                <View style={styles.selectedIndicator}>
+                  <Ionicons name="checkmark-circle" size={24} color={plan.color} />
+                  <Text style={[styles.selectedText, { color: plan.color }]}>Selected</Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </View>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={handleSkipPayment}
+          disabled={isProcessingPayment}
+        >
+          <Text style={styles.skipButtonText}>Continue with Free Plan</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            (!selectedPlan || isProcessingPayment) && styles.disabledButton,
+          ]}
+          onPress={handleContinueWithPayment}
+          disabled={!selectedPlan || isProcessingPayment}
+        >
+          {isProcessingPayment ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Text style={styles.continueButtonText}>Subscribe & Continue</Text>
+              <Ionicons name="arrow-forward" size={20} color="#fff" />
+            </>
+          )}
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -176,6 +268,7 @@ const styles = StyleSheet.create({
   },
   selectedPlan: {
     backgroundColor: '#f8f9fa',
+    borderWidth: 3,
   },
   popularBadge: {
     position: 'absolute',
@@ -227,5 +320,55 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     marginLeft: 8,
+  },
+  selectedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  selectedText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 20,
+  },
+  skipButton: {
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  skipButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  continueButton: {
+    backgroundColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 8,
   },
 });
