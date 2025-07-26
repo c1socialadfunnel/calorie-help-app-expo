@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../context/UserContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createCheckoutSession, manageSubscription, deleteAccount } from '../services/api';
 
 export default function Profile() {
-  const { user, dispatch } = useUser();
+  const { user, signOut } = useUser();
 
   if (!user) {
     return null;
@@ -30,15 +31,35 @@ export default function Profile() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.clear();
-              dispatch({ type: 'CLEAR_USER' });
-            } catch (error) {
+              await signOut();
+            } catch (error: any) {
               console.error('Error signing out:', error);
+              Alert.alert('Error', error.message || 'Failed to sign out');
             }
           },
         },
       ]
     );
+  };
+
+  const handleUpgrade = async () => {
+    try {
+      const result = await createCheckoutSession('intensive'); // Default to intensive plan
+      await Linking.openURL(result.url);
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      Alert.alert('Error', error.message || 'Failed to start upgrade process');
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      const result = await manageSubscription();
+      await Linking.openURL(result.url);
+    } catch (error: any) {
+      console.error('Error opening billing portal:', error);
+      Alert.alert('Error', error.message || 'Failed to open billing portal');
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -69,10 +90,11 @@ export default function Profile() {
                   style: 'destructive',
                   onPress: async () => {
                     try {
-                      await AsyncStorage.clear();
-                      dispatch({ type: 'CLEAR_USER' });
-                    } catch (error) {
+                      await deleteAccount();
+                      await signOut();
+                    } catch (error: any) {
                       console.error('Error deleting account:', error);
+                      Alert.alert('Error', error.message || 'Failed to delete account');
                     }
                   },
                 },
@@ -170,13 +192,13 @@ export default function Profile() {
           <MenuButton
             icon="card"
             title="Manage Subscription"
-            onPress={() => Alert.alert('Info', 'Subscription management would open here in a real app.')}
+            onPress={handleManageSubscription}
           />
           {user.subscriptionStatus === 'free' && (
             <MenuButton
               icon="star"
               title="Upgrade to Pro"
-              onPress={() => Alert.alert('Info', 'Upgrade flow would start here in a real app.')}
+              onPress={handleUpgrade}
               color="#007AFF"
             />
           )}

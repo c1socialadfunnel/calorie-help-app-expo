@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { mockSendMessage } from '../services/mockAI';
+import { sendMessage } from '../services/api';
 
 interface Message {
   id: string;
@@ -24,6 +24,7 @@ export default function AICoach() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   const quickPrompts = [
@@ -44,7 +45,7 @@ export default function AICoach() {
     setMessages([welcomeMessage]);
   }, []);
 
-  const sendMessage = async (text: string) => {
+  const sendMessageToAI = async (text: string) => {
     if (!text.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -59,15 +60,21 @@ export default function AICoach() {
     setIsLoading(true);
 
     try {
-      const response = await mockSendMessage(text.trim());
+      const response = await sendMessage(text.trim(), sessionId || undefined);
+      
+      // Update session ID if this is the first message
+      if (!sessionId) {
+        setSessionId(response.sessionId);
+      }
+
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: response.assistantMessage.id,
         role: 'assistant',
-        content: response.content,
-        timestamp: new Date(),
+        content: response.assistantMessage.content,
+        timestamp: new Date(response.assistantMessage.created_at),
       };
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -82,7 +89,7 @@ export default function AICoach() {
   };
 
   const handleQuickPrompt = (prompt: string) => {
-    sendMessage(prompt);
+    sendMessageToAI(prompt);
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
@@ -156,7 +163,7 @@ export default function AICoach() {
           />
           <TouchableOpacity
             style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.disabledButton]}
-            onPress={() => sendMessage(inputText)}
+            onPress={() => sendMessageToAI(inputText)}
             disabled={!inputText.trim() || isLoading}
           >
             <Ionicons 

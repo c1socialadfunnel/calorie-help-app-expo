@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { UserProvider } from './src/context/UserContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
+import AuthScreen from './src/screens/AuthScreen';
 import OnboardingFlow from './src/screens/OnboardingFlow';
 import Dashboard from './src/screens/Dashboard';
 import AIFoodLogger from './src/screens/AIFoodLogger';
@@ -50,11 +51,17 @@ function MainTabs() {
 }
 
 function AppNavigator() {
-  const { user } = useUser();
+  const { user, isLoading, isAuthenticated } = useUser();
+
+  if (isLoading) {
+    return null; // You could add a loading screen here
+  }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!user ? (
+      {!isAuthenticated ? (
+        <Stack.Screen name="Auth" component={AuthScreen} />
+      ) : !user ? (
         <Stack.Screen name="Onboarding" component={OnboardingFlow} />
       ) : (
         <>

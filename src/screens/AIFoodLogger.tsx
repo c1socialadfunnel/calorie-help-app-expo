@@ -15,19 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useUser } from '../context/UserContext';
-import { mockAnalyzeFood } from '../services/mockAI';
-
-interface AnalysisResult {
-  foodName: string;
-  estimatedServingSize: string;
-  calories: number;
-  proteinG: number;
-  carbsG: number;
-  fatG: number;
-  confidence: number;
-  healthInsights: string[];
-  ingredients: string[];
-}
+import { analyzeFood, AnalysisResult } from '../services/api';
 
 export default function AIFoodLogger() {
   const navigation = useNavigation();
@@ -87,12 +75,11 @@ export default function AIFoodLogger() {
   const analyzeImage = async (imageUri: string) => {
     setIsAnalyzing(true);
     try {
-      // Mock AI analysis - in a real app, this would send the image to your AI service
-      const result = await mockAnalyzeFood({ imageUri });
+      const result = await analyzeFood({ imageUri });
       setAnalysisResult(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error analyzing image:', error);
-      Alert.alert('Error', 'Failed to analyze image. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to analyze image. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -106,11 +93,11 @@ export default function AIFoodLogger() {
 
     setIsAnalyzing(true);
     try {
-      const result = await mockAnalyzeFood({ description: textDescription });
+      const result = await analyzeFood({ description: textDescription });
       setAnalysisResult(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error analyzing text:', error);
-      Alert.alert('Error', 'Failed to analyze description. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to analyze description. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -133,9 +120,9 @@ export default function AIFoodLogger() {
       Alert.alert('Success', 'Food logged successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error logging food:', error);
-      Alert.alert('Error', 'Failed to log food. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to log food. Please try again.');
     }
   };
 

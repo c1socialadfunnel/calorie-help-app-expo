@@ -53,4 +53,74 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
-    shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  calories: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  mealsList: {
+    gap: 8,
+  },
+  mealItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  mealInfo: {
+    flex: 1,
+  },
+  mealName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  mealDetails: {
+    fontSize: 12,
+    color: '#666',
+  },
+  macros: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  macroText: {
+    fontSize: 11,
+    color: '#999',
+    fontWeight: '500',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    borderRadius: 8,
+    borderStyle: 'dashed',
+  },
+  addButtonText: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+});
