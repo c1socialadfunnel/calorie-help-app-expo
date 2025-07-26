@@ -38,12 +38,12 @@ export default function WelcomeScreens() {
     if (currentScreen < welcomeScreens.length - 1) {
       setCurrentScreen(currentScreen + 1);
     } else {
-      nextStep();
+      nextStep(); // This will now go to the auth screen
     }
   };
 
   const handleSkip = () => {
-    nextStep();
+    nextStep(); // This will now go to the auth screen
   };
 
   const screen = welcomeScreens[currentScreen];

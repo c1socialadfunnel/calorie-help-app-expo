@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useOnboarding } from '../context/OnboardingContext';
 import WelcomeScreens from '../components/onboarding/WelcomeScreens';
+import OnboardingAuthScreen from '../components/onboarding/OnboardingAuthScreen';
 import GenderStep from '../components/onboarding/GenderStep';
 import HeightStep from '../components/onboarding/HeightStep';
 import BirthDateStep from '../components/onboarding/BirthDateStep';
@@ -19,20 +20,22 @@ export default function OnboardingFlow() {
       case 0:
         return <WelcomeScreens />;
       case 1:
-        return <GenderStep />;
+        return <OnboardingAuthScreen />;
       case 2:
-        return <HeightStep />;
+        return <GenderStep />;
       case 3:
-        return <BirthDateStep />;
+        return <HeightStep />;
       case 4:
-        return <WeightStep />;
+        return <BirthDateStep />;
       case 5:
-        return <ActivityLevelStep />;
+        return <WeightStep />;
       case 6:
-        return <TargetWeightStep />;
+        return <ActivityLevelStep />;
       case 7:
-        return <PlanSelectionStep />;
+        return <TargetWeightStep />;
       case 8:
+        return <PlanSelectionStep />;
+      case 9:
         return <PlanSummaryStep />;
       default:
         return <WelcomeScreens />;
